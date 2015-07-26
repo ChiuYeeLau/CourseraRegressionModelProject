@@ -1,0 +1,88 @@
+---
+title: "Regression Models Project Report"
+author: "Xiaoyi Liu"
+date: '2015-07-25'
+output: pdf_document
+---
+
+### Executive Summary ###
+
+In this project, we are going to explorer the relationship between a set of variables and miles per gallon (MPG) (outcome) in the "mtcars" dataset. We are particularly interested in the following two questions:
+
+1. Is an automatic or manual transmission better for MPG?
+
+2. Quantify the MPG difference between automatic and manual transmissions.
+
+We are going to fit different linear models to discover the influences of automatic or manual transmission towards mpg conditioned on different features.
+
+### Data Processing ###
+
+```{r}
+data(mtcars)
+dim(mtcars)
+head(mtcars, 3)
+```
+
+We can see the "mtcars" dataset consists of 32 samples, each with 11 features.
+
+### Data Analysis ###
+
+In this section, we are going to explorer the answers for the two questions listed in the abstract section. 
+
+First, we would like to find out that whether automatic or manual transmission is better for MPG. We present the boxplot of MPG with respect to automatic or manual in the appendix.
+
+It is quite clear that automatic is much better than manual transmission. Let's verify this through more rigorous data analysis.
+
+```{r}
+mean(subset(mtcars$mpg, mtcars$am == 1)) - mean(subset(mtcars$mpg, mtcars$am == 0))
+```
+We can see the automatic transmission has a much higher mean than the manual ones.
+
+```{r, results = 'hide'}
+t.test(mpg ~ am, data = mtcars)
+```
+The t-test result shows a p-value of 0.001374, which is much smaller than 0.05. Apparently, we should accept the alternative hypothesis that there exists true difference in mean between automatic and manual transmissions. Therefore, we should conclude that automatic is better than manual in MPG. Next, we are going to quantify the MPG difference between them.
+
+```{r, results = 'hide'}
+mtcars$am = as.factor(mtcars$am)
+fit1 = lm(mpg ~ ., data = mtcars)
+summary(fit1)
+```
+
+We fit a linear model for mpg based on all the features. It can be seen that all the p-values are significanlty larger than 0.05, which means the null hypothesis that the corresponding coefficient for each feature is zero should be accepted. We will select the features wt and qsec with the smallest p-values to analyze their interactions with am towards mpg.
+
+```{r, results = 'hide'}
+fit2 = lm(mpg ~ wt + qsec + am, data = mtcars)
+summary(fit2)
+```
+
+It can be seen that compared with qsec, the p-value for wt is much smaller than that of qsec, which suggests that the the null hypothesis that the coefficient for wt is zero is not supported. We should dig more into the effects of wt now.
+
+```{r, results = 'hide'}
+fit3 = lm(mpg ~ am * wt, mtcars)
+summary(fit3)
+```
+
+It can be seen that for a fixed weight, the manual transmission (represented by am1) can earn more mpg (14.8784 - 5.2984 > 0) than automatic one, which is a little bit out of surprise. 
+
+The residual plot is shown in the appendix. We can observe that: (1) No consistent pattern appears in the figure of "Residuals vs Fitted"; (2) No outliers in the dataset are present, since all the values in the figure of "Residuals vs Leverage" fall into the 0.5 bands.
+
+
+### Conclusions ###
+Through the data analysis towards the "mtcars" dataset, we have made the following conclusions:
+
+1. Automatic transmission is better than the manual one for MPG.
+
+2. With fixed weight, manual transmission will gain more mpg than the automatic transmission.
+
+### Appendix ###
+
+```{r, fig.length = 4, fig.width = 5}
+boxplot(mpg ~ am, data = mtcars, varwidth = TRUE, col=c("green","yellow"), names = c("Manual","Automatic"), main = "MPG")
+```
+
+```{r, fig.length = 4, fig.width = 5}
+par(mfrow = c(2, 2))
+plot(fit3)
+```
+
